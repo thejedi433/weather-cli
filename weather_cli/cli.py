@@ -64,7 +64,14 @@ def current(location: Optional[str], json_output: bool, max_age: int):
 def forecast(location: Optional[str], max_age: int):
     """Get 3-day forecast."""
     cache = get_cache()
-    
+
+    if location is None:
+        location = cache.get_default_location()
+        if location is None:
+            click.echo("Error: no location provided and no default set", err=True)
+            click.echo("Use: weather set-location <city>", err=True)
+            raise SystemExit(1)
+
     try:
         days = get_forecast(location, cache=cache, max_age=max_age)
     except WeatherError as e:

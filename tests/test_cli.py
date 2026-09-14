@@ -179,3 +179,23 @@ class TestCLI:
         from weather_cli.cli import get_cache
         cache = get_cache()
         assert isinstance(cache, WeatherCache)
+
+    @responses.activate
+    def test_forecast_uses_default_location(self, runner, tmp_cache, monkeypatch):
+        responses.add(
+            responses.GET,
+            "https://wttr.in/Oslo",
+            json=SAMPLE_RESPONSE,
+            status=200,
+        )
+        monkeypatch.setattr("weather_cli.cli.get_cache", lambda: tmp_cache)
+        tmp_cache.set_default_location("Oslo")
+        result = runner.invoke(main, ["forecast"])
+        assert result.exit_code == 0
+        assert "2026-09-09" in result.output
+
+    def test_forecast_fails_without_location_or_default(self, runner, tmp_cache, monkeypatch):
+        monkeypatch.setattr("weather_cli.cli.get_cache", lambda: tmp_cache)
+        result = runner.invoke(main, ["forecast"])
+        assert result.exit_code != 0
+        assert "location" in result.output.lower() or "error" in result.output.lower()
