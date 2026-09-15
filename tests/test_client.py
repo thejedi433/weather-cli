@@ -158,6 +158,16 @@ class TestGetCurrent:
             client.get_current("Oslo", cache=tmp_cache)
 
     @responses.activate
+    def test_raises_on_timeout(self, tmp_cache):
+        responses.add(
+            responses.GET,
+            "https://wttr.in/Oslo",
+            body=requests.exceptions.Timeout("request timed out"),
+        )
+        with pytest.raises(client.WeatherError, match="network"):
+            client.get_current("Oslo", cache=tmp_cache)
+
+    @responses.activate
     def test_works_without_cache(self):
         responses.add(
             responses.GET,
